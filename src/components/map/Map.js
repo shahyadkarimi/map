@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { MapContainer, Marker, TileLayer } from "react-leaflet";
 
 import "leaflet/dist/leaflet.css";
@@ -18,86 +18,52 @@ import {
   ModalFooter,
   useDisclosure,
   Input,
+  Spinner,
 } from "@nextui-org/react";
+import { getData } from "@/services/API";
+
+// table columns
+const columns = [
+  { name: "ID", uid: "id" },
+  { name: "x", uid: "x" },
+  { name: "y", uid: "y" },
+  { name: "z", uid: "z" },
+  { name: "time", uid: "time" },
+  { name: "", uid: "action" },
+];
 
 export default function Map() {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const position = [51.505, -0.09];
+  const [loading, setLoading] = useState(true);
+  const [points, setPoints] = useState([]);
 
-  const columns = [
-    { name: "ID", uid: "id" },
-    { name: "x", uid: "x" },
-    { name: "y", uid: "y" },
-    { name: "z", uid: "z" },
-    { name: "time", uid: "time" },
-    { name: "", uid: "action" },
-  ];
+  const getAllPoints = () => {
+    setLoading(true);
 
-  const users = [
-    {
-      id: 1,
-      name: "Tony Reichert",
-      role: "359",
-      team: "261",
-      status: "12:40:12",
-      age: "127",
-      avatar: "https://i.pravatar.cc/150?u=a042581f4e29026024d",
-      email: "tony.reichert@example.com",
-    },
-    {
-      id: 2,
-      name: "Zoey Lang",
-      role: "785",
-      team: "103",
-      status: "12:40:12",
-      age: "312",
-      avatar: "https://i.pravatar.cc/150?u=a042581f4e29026704d",
-      email: "zoey.lang@example.com",
-    },
-    {
-      id: 3,
-      name: "Jane Fisher",
-      role: "453",
-      team: "452",
-      status: "12:40:12",
-      age: "736",
-      avatar: "https://i.pravatar.cc/150?u=a04258114e29026702d",
-      email: "jane.fisher@example.com",
-    },
-    {
-      id: 4,
-      name: "William Howard",
-      role: "789",
-      team: "238",
-      status: "12:40:12",
-      age: "123",
-      avatar: "https://i.pravatar.cc/150?u=a048581f4e29026701d",
-      email: "william.howard@example.com",
-    },
-    {
-      id: 5,
-      name: "Kristen Copper",
-      role: "456",
-      team: "123",
-      status: "12:40:12",
-      age: "457",
-      avatar: "https://i.pravatar.cc/150?u=a092581d4ef9026700d",
-      email: "kristen.cooper@example.com",
-    },
-  ];
+    getData("/api/map", {}).then((res) => {
+      setPoints(res.data);
+      setLoading(false);
+    });
+  };
 
-  const renderCell = useCallback((user, columnKey) => {
-    const cellValue = user[columnKey];
+  useEffect(() => {
+    getAllPoints();
+  }, []);
+
+
+  const renderCell = useCallback((point, columnKey, id) => {
+    const cellValue = point[columnKey];
 
     switch (columnKey) {
       case "id":
-        return <span>{user.id}</span>;
+        return <span>{id}</span>;
       case "x":
         return (
           <div className="flex flex-col">
             <p className="text-bold text-sm capitalize">{cellValue}</p>
             <p className="text-bold text-sm capitalize text-gray-700">
-              {user.team}
+              {point.lat}
             </p>
           </div>
         );
@@ -106,7 +72,7 @@ export default function Map() {
           <div className="flex flex-col">
             <p className="text-bold text-sm capitalize">{cellValue}</p>
             <p className="text-bold text-sm capitalize text-gray-700">
-              {user.role}
+              {point.lng}
             </p>
           </div>
         );
@@ -114,9 +80,7 @@ export default function Map() {
         return (
           <div className="flex flex-col">
             <p className="text-bold text-sm capitalize">{cellValue}</p>
-            <p className="text-bold text-sm capitalize text-gray-700">
-              {user.age}
-            </p>
+            <p className="text-bold text-sm capitalize text-gray-700">z</p>
           </div>
         );
 
@@ -125,7 +89,7 @@ export default function Map() {
           <div className="flex flex-col">
             <p className="text-bold text-sm capitalize">{cellValue}</p>
             <p className="text-bold text-sm capitalize text-gray-700">
-              {user.status}
+              {point.date}
             </p>
           </div>
         );
@@ -288,7 +252,11 @@ export default function Map() {
                   <Button color="danger" variant="light" onPress={onClose}>
                     Close
                   </Button>
-                  <Button variant="shadow" className="bg-green-600 text-white shadow-green-200" onPress={onClose}>
+                  <Button
+                    variant="shadow"
+                    className="bg-green-600 text-white shadow-green-200"
+                    onPress={onClose}
+                  >
                     Add point
                   </Button>
                 </div>
@@ -335,11 +303,21 @@ export default function Map() {
               </TableColumn>
             )}
           </TableHeader>
-          <TableBody items={users}>
+          <TableBody
+            loadingContent={<Spinner label="Loading..." />}
+            isLoading={loading}
+            items={points}
+          >
             {(item) => (
-              <TableRow key={item.id}>
+              <TableRow key={item._id}>
                 {(columnKey) => (
-                  <TableCell>{renderCell(item, columnKey)}</TableCell>
+                  <TableCell>
+                    {renderCell(
+                      item,
+                      columnKey,
+                      points.findIndex((p) => p._id === item._id) + 1
+                    )}
+                  </TableCell>
                 )}
               </TableRow>
             )}
