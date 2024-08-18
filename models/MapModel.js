@@ -15,6 +15,6 @@ const schema = mongoose.Schema({
   },
 });
 
-const model = mongoose.models.MapInfo || mongoose.model("MapInfo", schema);
+const model = mongoose.models.MapModel || mongoose.model("MapModel", schema);
 
 export default model;
