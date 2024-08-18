@@ -13,6 +13,10 @@ const schema = mongoose.Schema({
     type: Date,
     default: () => Date.now(),
   },
+  deletedAt: {
+    type: mongoose.Schema.Types.Mixed,
+    default: null,
+  },
 });
 
 const model = mongoose.models.MapModel || mongoose.model("MapModel", schema);

@@ -7,12 +7,12 @@ export async function POST(req) {
 
     const body = await req.json();
 
-    const { lat, lng, date } = body;
+    const { lat, lng, date, deletedAt } = body;
 
-    const points = await MapModel.create({ lat, lng, date });
+    const points = await MapModel.create({ lat, lng, date, deletedAt });
 
     return Response.json(
-      { message: "point created successfully !", points },
+      { message: "Point created successfully !", points },
       { status: 200 }
     );
   } catch (err) {
@@ -22,9 +22,29 @@ export async function POST(req) {
 
 export async function GET() {
   try {
-    const points = await MapModel.find({}, "-__v");
+    const points = await MapModel.find({ deletedAt: null }, "-__v");
 
     return Response.json(points);
+  } catch (err) {
+    return Response.json({ message: err }, { status: 500 });
+  }
+}
+
+export async function DELETE(req) {
+  try {
+    const body = await req.json();
+    const { id } = body;
+
+    await MapModel.findOneAndUpdate(
+      { _id: id },
+      {
+        $set: {
+          deletedAt: new Date(),
+        },
+      }
+    );
+
+    return Response.json({ message: "Point deleted successfully !" });
   } catch (err) {
     return Response.json({ message: err }, { status: 500 });
   }

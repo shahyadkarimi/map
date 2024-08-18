@@ -20,7 +20,7 @@ import {
   Input,
   Spinner,
 } from "@nextui-org/react";
-import { getData } from "@/services/API";
+import { deleteData, getData } from "@/services/API";
 
 // table columns
 const columns = [
@@ -36,21 +36,28 @@ export default function Map() {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const position = [51.505, -0.09];
   const [loading, setLoading] = useState(true);
+  const [rotateIcon, setRotateIcon] = useState(false);
   const [points, setPoints] = useState([]);
+  const [deleteModal, setDeleteModal] = useState(false);
+  const [deleteLoadin, setDeleteLoading] = useState(false);
+  const [pointId, setPointId] = useState("");
 
+  // get all points
   const getAllPoints = () => {
     setLoading(true);
+    setDeleteLoading(false);
+    setDeleteModal(false);
 
     getData("/api/map", {}).then((res) => {
       setPoints(res.data);
       setLoading(false);
+      setRotateIcon(false);
     });
   };
 
   useEffect(() => {
     getAllPoints();
   }, []);
-
 
   const renderCell = useCallback((point, columnKey, id) => {
     const cellValue = point[columnKey];
@@ -89,7 +96,7 @@ export default function Map() {
           <div className="flex flex-col">
             <p className="text-bold text-sm capitalize">{cellValue}</p>
             <p className="text-bold text-sm capitalize text-gray-700">
-              {point.date}
+              {new Date(point.date).toLocaleString()}
             </p>
           </div>
         );
@@ -134,8 +141,15 @@ export default function Map() {
                 </svg>
               </span>
             </Tooltip>
+
             <Tooltip color="danger" content="delete point">
-              <span className="text-lg text-danger cursor-pointer active:opacity-50">
+              <button
+                onClick={() => {
+                  setDeleteModal(true);
+                  setPointId(point._id);
+                }}
+                className="text-lg text-danger cursor-pointer active:opacity-50"
+              >
                 <svg
                   aria-hidden="true"
                   fill="none"
@@ -181,7 +195,7 @@ export default function Map() {
                     strokeWidth={1.5}
                   />
                 </svg>
-              </span>
+              </button>
             </Tooltip>
           </div>
         );
@@ -189,6 +203,15 @@ export default function Map() {
         return cellValue;
     }
   }, []);
+
+  // delete single point
+  const deletePointHandler = () => {
+    setDeleteLoading(true);
+
+    deleteData("/api/map", { id: pointId }).then((res) => {
+      getAllPoints();
+    });
+  };
 
   return (
     <div className="w-full flex flex-col h-full">
@@ -266,6 +289,62 @@ export default function Map() {
         </ModalContent>
       </Modal>
 
+      {/* delete point modal */}
+      <Modal
+        classNames={{ backdrop: "z-[999]", wrapper: "z-[9999]" }}
+        isOpen={deleteModal}
+        size="xs"
+      >
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col gap-1">
+                Delete point
+              </ModalHeader>
+              <ModalBody>
+                <div className="w-full flex gap-2">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="1.5"
+                    stroke="currentColor"
+                    className="size-7 text-red-600"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
+                    />
+                  </svg>
+
+                  <span>Are you sure you want to delete this point?</span>
+                </div>
+              </ModalBody>
+
+              <ModalFooter>
+                <div className="w-full flex justify-center gap-4">
+                  <Button
+                    color="danger"
+                    variant="light"
+                    onPress={() => setDeleteModal(false)}
+                  >
+                    Close
+                  </Button>
+                  <Button
+                    variant="shadow"
+                    className="bg-red-600 text-white shadow-red-200"
+                    onPress={deletePointHandler}
+                  >
+                    Delete point
+                  </Button>
+                </div>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+
       <div className="w-full relative h-[60%]">
         <MapContainer center={position} zoom={13} scrollWheelZoom={false}>
           <TileLayer
@@ -277,7 +356,7 @@ export default function Map() {
       </div>
 
       <div className="w-full flex flex-col mt-3 max-h-[40%]">
-        <div className="w-full px-4">
+        <div className="w-full flex items-center gap-4 px-4">
           <Button
             onPress={onOpen}
             className="bg-indigo-600 shadow-indigo-200 text-white"
@@ -285,6 +364,29 @@ export default function Map() {
           >
             + New Point
           </Button>
+
+          <button
+            onClick={() => {
+              getAllPoints();
+              setRotateIcon(true);
+            }}
+            className="bg-gray-100 active:scale-95 transition-all duration-300 w-10 h-10 rounded-xl shadow-lg flex justify-center items-center shadow-gray-200 text-gray-600"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth="1.5"
+              stroke="currentColor"
+              className={`size-5 ${rotateIcon && "spinner-anim"}`}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"
+              />
+            </svg>
+          </button>
         </div>
 
         <Table
@@ -294,11 +396,7 @@ export default function Map() {
         >
           <TableHeader columns={columns}>
             {(column) => (
-              <TableColumn
-                key={column.uid}
-                // align={column.uid === "actions" ? "center" : "start"}
-                align="center"
-              >
+              <TableColumn key={column.uid} align="center">
                 {column.name}
               </TableColumn>
             )}
@@ -307,6 +405,7 @@ export default function Map() {
             loadingContent={<Spinner label="Loading..." />}
             isLoading={loading}
             items={points}
+            emptyContent="doesn't exist any point  !"
           >
             {(item) => (
               <TableRow key={item._id}>

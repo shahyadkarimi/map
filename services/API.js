@@ -7,7 +7,6 @@ const servicesApi = axios.create({
     common: {
       Accept: "application/json",
     },
-    
   },
 });
 
@@ -84,7 +83,7 @@ const deleteData = async (param, data, withToken = false) => {
     return res;
   }
 
-  const res = await servicesApi.delete(param, data);
+  const res = await servicesApi.delete(param, { data: data });
   return res;
 };
 
