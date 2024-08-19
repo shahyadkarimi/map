@@ -1,5 +1,6 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useCallback, useEffect, useState } from "react";
-import { MapContainer, Marker, TileLayer } from "react-leaflet";
+import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import {
   Table,
@@ -15,7 +16,6 @@ import {
   ModalHeader,
   ModalBody,
   ModalFooter,
-  useDisclosure,
   Input,
   Spinner,
   Chip,
@@ -23,6 +23,8 @@ import {
 import { deleteData, getData, postData } from "@/services/API";
 import { PointIcon } from "./PointIcon";
 import { useForm } from "react-hook-form";
+import { EditIcon } from "./EditIcon";
+import { DeleteIcon } from "./DeleteIcon";
 
 // table columns
 const columns = [
@@ -45,11 +47,8 @@ export default function Map() {
   const {
     register,
     handleSubmit,
-    control,
     setValue,
-    watch,
     reset,
-    clearErrors,
     formState: { errors },
   } = useForm({
     mode: "onBlur",
@@ -58,6 +57,9 @@ export default function Map() {
       lat: "",
       lng: "",
       frequency: "",
+      lat_settings: "",
+      lng_settings: "",
+      zoom: "",
     },
   });
 
@@ -73,10 +75,32 @@ export default function Map() {
   const [statusLoading, setStatusLoading] = useState(false);
   const [editModal, setEditModal] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
+  const [settings, setSettings] = useState({});
+  const [settingsModal, setSettingsModal] = useState(false);
+  const [settingsLoading, setSettingsLoading] = useState(true);
+  const [settingsUpdateLoading, setSettingsUpdateLoading] = useState(false);
+
+  // get all points
+  const getSettings = () => {
+    getData("/api/settings", {})
+      .then((res) => {
+        setSettings(res.data);
+        setSettingsLoading(false);
+
+        // action after update
+        setSettingsModal(false);
+        setSettingsUpdateLoading(false);
+      })
+      .catch((err) => {
+        setSettingsLoading(false);
+      });
+  };
 
   // get all points
   const getAllPoints = () => {
     setLoading(true);
+
+    // action after updates(add, edit, change status & delete points)
     setDeleteLoading(false);
     setDeleteModal(false);
     setStatusLoading(false);
@@ -99,9 +123,14 @@ export default function Map() {
   };
 
   useEffect(() => {
+    // get all points
     getAllPoints();
+
+    // get settings data
+    getSettings();
   }, []);
 
+  // data table custom cell
   const renderCell = (point, columnKey, id) => {
     const cellValue = point[columnKey];
 
@@ -111,7 +140,7 @@ export default function Map() {
       case "name":
         return (
           <div className="flex flex-col">
-            <p className="text-bold text-sm capitalize text-gray-700">
+            <p className="text-bold text-sm text-gray-700">
               {point.name}
             </p>
           </div>
@@ -120,7 +149,7 @@ export default function Map() {
       case "lat":
         return (
           <div className="flex flex-col">
-            <p className="text-bold text-sm capitalize text-gray-700">
+            <p className="text-bold text-sm text-gray-700">
               {point.lat}
             </p>
           </div>
@@ -128,7 +157,7 @@ export default function Map() {
       case "lng":
         return (
           <div className="flex flex-col">
-            <p className="text-bold text-sm capitalize text-gray-700">
+            <p className="text-bold text-sm text-gray-700">
               {point.lng}
             </p>
           </div>
@@ -136,7 +165,7 @@ export default function Map() {
       case "z":
         return (
           <div className="flex flex-col">
-            <p className="text-bold text-sm capitalize text-gray-700">
+            <p className="text-bold text-sm text-gray-700">
               {point.frequency}
             </p>
           </div>
@@ -172,40 +201,7 @@ export default function Map() {
                 onClick={() => setPointEditableData(point)}
                 className="text-lg text-default-400 cursor-pointer active:opacity-50"
               >
-                <svg
-                  aria-hidden="true"
-                  fill="none"
-                  focusable="false"
-                  height="1em"
-                  role="presentation"
-                  viewBox="0 0 20 20"
-                  width="1em"
-                >
-                  <path
-                    d="M11.05 3.00002L4.20835 10.2417C3.95002 10.5167 3.70002 11.0584 3.65002 11.4334L3.34169 14.1334C3.23335 15.1084 3.93335 15.775 4.90002 15.6084L7.58335 15.15C7.95835 15.0834 8.48335 14.8084 8.74168 14.525L15.5834 7.28335C16.7667 6.03335 17.3 4.60835 15.4583 2.86668C13.625 1.14168 12.2334 1.75002 11.05 3.00002Z"
-                    stroke="currentColor"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeMiterlimit={10}
-                    strokeWidth={1.5}
-                  />
-                  <path
-                    d="M9.90833 4.20831C10.2667 6.50831 12.1333 8.26665 14.45 8.49998"
-                    stroke="currentColor"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeMiterlimit={10}
-                    strokeWidth={1.5}
-                  />
-                  <path
-                    d="M2.5 18.3333H17.5"
-                    stroke="currentColor"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeMiterlimit={10}
-                    strokeWidth={1.5}
-                  />
-                </svg>
+                <EditIcon />
               </button>
             </Tooltip>
 
@@ -217,51 +213,7 @@ export default function Map() {
                 }}
                 className="text-lg text-danger cursor-pointer active:opacity-50"
               >
-                <svg
-                  aria-hidden="true"
-                  fill="none"
-                  focusable="false"
-                  height="1em"
-                  role="presentation"
-                  viewBox="0 0 20 20"
-                  width="1em"
-                >
-                  <path
-                    d="M17.5 4.98332C14.725 4.70832 11.9333 4.56665 9.15 4.56665C7.5 4.56665 5.85 4.64998 4.2 4.81665L2.5 4.98332"
-                    stroke="currentColor"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                  />
-                  <path
-                    d="M7.08331 4.14169L7.26665 3.05002C7.39998 2.25835 7.49998 1.66669 8.90831 1.66669H11.0916C12.5 1.66669 12.6083 2.29169 12.7333 3.05835L12.9166 4.14169"
-                    stroke="currentColor"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                  />
-                  <path
-                    d="M15.7084 7.61664L15.1667 16.0083C15.075 17.3166 15 18.3333 12.675 18.3333H7.32502C5.00002 18.3333 4.92502 17.3166 4.83335 16.0083L4.29169 7.61664"
-                    stroke="currentColor"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                  />
-                  <path
-                    d="M8.60834 13.75H11.3833"
-                    stroke="currentColor"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                  />
-                  <path
-                    d="M7.91669 10.4167H12.0834"
-                    stroke="currentColor"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                  />
-                </svg>
+                <DeleteIcon />
               </button>
             </Tooltip>
           </div>
@@ -312,6 +264,7 @@ export default function Map() {
     setValue("frequency", point.frequency);
   };
 
+  // close edit modal & clear inputes
   const closeEditModalHandler = () => {
     setEditModal(false);
     setPointId("");
@@ -326,8 +279,38 @@ export default function Map() {
       (res) => {
         // refresh point data table
         getAllPoints();
+
+        // close modal & clear inputes
+        closeEditModalHandler();
       }
     );
+  };
+
+  //open settings modal & set defualt data in settings input
+  const openSettingsModal = () => {
+    setSettingsModal(true);
+    setValue("lat_settings", settings.lat);
+    setValue("lng_settings", settings.lng);
+    setValue("zoom", settings.zoom);
+  };
+
+  // update settings data handler
+  const updateSettingsHandler = (data) => {
+    setSettingsUpdateLoading(true);
+
+    postData("/api/settings", {
+      lat: data.lat_settings,
+      lng: data.lng_settings,
+      zoom: data.zoom,
+    })
+      .then((res) => {
+        setSettingsUpdateLoading(false);
+        window.location.reload();
+        getSettings();
+      })
+      .catch((err) => {
+        setSettingsLoading(false);
+      });
   };
 
   return (
@@ -548,16 +531,86 @@ export default function Map() {
         </ModalContent>
       </Modal>
 
+      {/* settings modal */}
+      <Modal
+        classNames={{ backdrop: "z-[999]", wrapper: "z-[9999]" }}
+        isOpen={settingsModal}
+        onClose={() => setSettingsModal(false)}
+      >
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col gap-1">
+                Settings
+              </ModalHeader>
+              <ModalBody>
+                <div className="w-full flex flex-col gap-4">
+                  <Input
+                    isRequired
+                    label="Lat"
+                    labelPlacement="outside"
+                    placeholder="Enter point lat"
+                    isInvalid={errors.lat_settings ? true : false}
+                    errorMessage="lat is required"
+                    {...register("lat_settings", { required: true })}
+                  />
+
+                  <Input
+                    isRequired
+                    label="Lng"
+                    labelPlacement="outside"
+                    placeholder="Enter point lng"
+                    isInvalid={errors.lng_settings ? true : false}
+                    errorMessage="lng is required"
+                    {...register("lng_settings", { required: true })}
+                  />
+
+                  <Input
+                    isRequired
+                    label="Zoom"
+                    labelPlacement="outside"
+                    placeholder="Enter map zoom"
+                    isInvalid={errors.zoom ? true : false}
+                    errorMessage="zoom is required"
+                    {...register("zoom", { required: true })}
+                  />
+                </div>
+              </ModalBody>
+              <ModalFooter>
+                <div className="w-full flex justify-center gap-4">
+                  <Button
+                    color="danger"
+                    variant="light"
+                    onClick={() => setSettingsModal(false)}
+                  >
+                    Close
+                  </Button>
+                  <Button
+                    isLoading={settingsUpdateLoading}
+                    variant="shadow"
+                    className="bg-green-600 text-white shadow-green-200"
+                    onClick={handleSubmit(updateSettingsHandler)}
+                  >
+                    Save
+                  </Button>
+                </div>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+
+      {/* map & markers */}
       <div className="w-full relative h-[60%]">
-        {loading ? (
+        {loading || settingsLoading ? (
           <div className="flex justify-center items-center bg-gray-50 w-full h-full">
             <Spinner label="please wait..." />
           </div>
         ) : (
           <MapContainer
-            center={[35.694523130867424, 51.40922197948697]}
-            zoom={13}
-            scrollWheelZoom={false}
+            center={[settings.lat, settings.lng]}
+            zoom={settings.zoom}
+            scrollWheelZoom={true}
           >
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -572,7 +625,35 @@ export default function Map() {
                       key={point._id}
                       icon={PointIcon}
                       position={[point.lat, point.lng]}
-                    ></Marker>
+                    >
+                      <Popup>
+                        <div className="w-full flex flex-col gap-1">
+                          <span>name: {point.name}</span>
+                          <span>lat: {point.lat}</span>
+                          <span>lng: {point.lng}</span>
+                          <span>frequency: {point.frequency}</span>
+
+                          <div className="w-full flex items-center justify-center mt-2 gap-3">
+                            <button
+                              onClick={() => setPointEditableData(point)}
+                              className="text-lg text-default-400 cursor-pointer active:opacity-50"
+                            >
+                              <EditIcon />
+                            </button>
+
+                            <button
+                              onClick={() => {
+                                setDeleteModal(true);
+                                setPointId(point._id);
+                              }}
+                              className="text-lg text-danger cursor-pointer active:opacity-50"
+                            >
+                              <DeleteIcon />
+                            </button>
+                          </div>
+                        </div>
+                      </Popup>
+                    </Marker>
                   )
               )}
           </MapContainer>
@@ -618,26 +699,33 @@ export default function Map() {
           </div>
 
           {/* settings */}
-          <button className="bg-red-600 active:scale-95 transition-all duration-300 w-10 h-10 rounded-xl shadow-lg flex justify-center items-center shadow-red-200 text-white">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth="1.5"
-              stroke="currentColor"
-              className="size-6"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
-              />
-            </svg>
+          <button
+            onClick={openSettingsModal}
+            className="bg-red-600 active:scale-95 outline-none transition-all duration-300 w-10 h-10 rounded-xl shadow-lg flex justify-center items-center shadow-red-200 text-white"
+          >
+            {settingsLoading ? (
+              <Spinner size="sm" color="white" />
+            ) : (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth="1.5"
+                stroke="currentColor"
+                className="size-6"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+                />
+              </svg>
+            )}
           </button>
         </div>
 

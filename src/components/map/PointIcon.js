@@ -5,7 +5,7 @@ const PointIcon = new L.Icon({
     iconUrl: "/assets/icon.png",
     iconRetinaUrl: "/assets/icon.png",
     iconAnchor: null,
-    popupAnchor: null,
+    // popupAnchor:,
     shadowUrl: null,
     shadowSize: null,
     shadowAnchor: null,
