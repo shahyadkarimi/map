@@ -305,7 +305,7 @@ export default function Map() {
     })
       .then((res) => {
         setSettingsUpdateLoading(false);
-        window.location.reload();
+        // window.location.reload();
         getSettings();
       })
       .catch((err) => {
