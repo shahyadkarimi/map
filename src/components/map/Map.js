@@ -19,8 +19,10 @@ import {
   useDisclosure,
   Input,
   Spinner,
+  Chip,
 } from "@nextui-org/react";
-import { deleteData, getData } from "@/services/API";
+import { deleteData, getData, postData } from "@/services/API";
+import { PointIcon } from "./PointIcon";
 
 // table columns
 const columns = [
@@ -28,29 +30,38 @@ const columns = [
   { name: "x", uid: "x" },
   { name: "y", uid: "y" },
   { name: "z", uid: "z" },
+  { name: "status", uid: "status" },
   { name: "time", uid: "time" },
   { name: "", uid: "action" },
 ];
 
+const statusColorMap = {
+  active: "success",
+  disable: "danger",
+};
+
 export default function Map() {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
-  const position = [51.505, -0.09];
+  const [position, setPosition] = useState([]);
   const [loading, setLoading] = useState(true);
   const [rotateIcon, setRotateIcon] = useState(false);
   const [points, setPoints] = useState([]);
   const [deleteModal, setDeleteModal] = useState(false);
-  const [deleteLoadin, setDeleteLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [pointId, setPointId] = useState("");
+  const [statusLoading, setStatusLoading] = useState(false);
 
   // get all points
   const getAllPoints = () => {
     setLoading(true);
     setDeleteLoading(false);
     setDeleteModal(false);
+    setStatusLoading(false);
 
     getData("/api/map", {})
       .then((res) => {
         setPoints(res.data);
+        setPosition([res.data[0].lat, res.data[0].lng]);
         setLoading(false);
         setRotateIcon(false);
       })
@@ -93,6 +104,20 @@ export default function Map() {
             <p className="text-bold text-sm capitalize">{cellValue}</p>
             <p className="text-bold text-sm capitalize text-gray-700">z</p>
           </div>
+        );
+
+      case "status":
+        return (
+          <button onClick={() => changeStatusHandler(point._id)}>
+            <Chip
+              className="capitalize"
+              color={statusColorMap[point.status]}
+              size="sm"
+              variant="flat"
+            >
+              {statusLoading ? "wait..." : cellValue}
+            </Chip>
+          </button>
         );
 
       case "time":
@@ -217,6 +242,14 @@ export default function Map() {
     });
   };
 
+  const changeStatusHandler = (id) => {
+    setStatusLoading(true);
+
+    postData("/api/map/change-status", { id }).then((res) => {
+      getAllPoints();
+    });
+  };
+
   return (
     <div className="w-full flex flex-col h-full">
       {/* add new point modal */}
@@ -235,9 +268,9 @@ export default function Map() {
                 <div className="w-full flex flex-col gap-4">
                   <Input
                     isRequired
-                    label="Frequency"
+                    label="Point name"
                     labelPlacement="outside"
-                    placeholder="Enter point frequency"
+                    placeholder="Enter point name"
                     // className="max-w-xs"
                   />
 
@@ -259,17 +292,9 @@ export default function Map() {
 
                   <Input
                     isRequired
-                    label="Status"
+                    label="Frequency"
                     labelPlacement="outside"
-                    placeholder="Enter point status"
-                    // className="max-w-xs"
-                  />
-
-                  <Input
-                    isRequired
-                    label="Point name"
-                    labelPlacement="outside"
-                    placeholder="Enter point name"
+                    placeholder="Enter point frequency"
                     // className="max-w-xs"
                   />
                 </div>
@@ -336,6 +361,7 @@ export default function Map() {
                     Close
                   </Button>
                   <Button
+                    isLoading={deleteLoading}
                     variant="shadow"
                     className="bg-red-600 text-white shadow-red-200"
                     onPress={deletePointHandler}
@@ -350,13 +376,28 @@ export default function Map() {
       </Modal>
 
       <div className="w-full relative h-[60%]">
-        <MapContainer center={position} zoom={13} scrollWheelZoom={false}>
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          <Marker position={position}></Marker>
-        </MapContainer>
+        {loading ? (
+          <div className="flex justify-center items-center bg-gray-50 w-full h-full">
+            <Spinner label="please wait..." />
+          </div>
+        ) : (
+          <MapContainer center={position} zoom={13} scrollWheelZoom={false}>
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+
+            {points.map(
+              (point) =>
+                point.status === "active" && (
+                  <Marker
+                    icon={PointIcon}
+                    position={[point.lat, point.lng]}
+                  ></Marker>
+                )
+            )}
+          </MapContainer>
+        )}
       </div>
 
       <div className="w-full flex flex-col mt-3 max-h-[40%]">
