@@ -7,9 +7,16 @@ export async function POST(req) {
 
     const body = await req.json();
 
-    const { lat, lng, date, deletedAt } = body;
+    const { lat, lng, date, deletedAt, name, frequency } = body;
 
-    const points = await MapModel.create({ lat, lng, date, deletedAt });
+    const points = await MapModel.create({
+      lat,
+      lng,
+      date,
+      name,
+      frequency,
+      deletedAt,
+    });
 
     return Response.json(
       { message: "Point created successfully !", points },
@@ -22,6 +29,8 @@ export async function POST(req) {
 
 export async function GET() {
   try {
+    await connectDB();
+
     const points = await MapModel.find({ deletedAt: null }, "-__v");
 
     return Response.json(points);
@@ -32,6 +41,8 @@ export async function GET() {
 
 export async function DELETE(req) {
   try {
+    await connectDB();
+
     const body = await req.json();
     const { id } = body;
 
