@@ -22,13 +22,15 @@ import {
 } from "@nextui-org/react";
 import { deleteData, getData, postData } from "@/services/API";
 import { PointIcon } from "./PointIcon";
+import { useForm } from "react-hook-form";
 
 // table columns
 const columns = [
-  { name: "ID", uid: "id" },
-  { name: "x", uid: "x" },
-  { name: "y", uid: "y" },
-  { name: "z", uid: "z" },
+  { name: "id", uid: "id" },
+  { name: "name", uid: "name" },
+  { name: "lat", uid: "lat" },
+  { name: "lng", uid: "lng" },
+  { name: "frequency", uid: "frequency" },
   { name: "status", uid: "status" },
   { name: "time", uid: "time" },
   { name: "", uid: "action" },
@@ -40,11 +42,31 @@ const statusColorMap = {
 };
 
 export default function Map() {
-  const { isOpen, onOpen, onOpenChange } = useDisclosure();
+  const {
+    register,
+    handleSubmit,
+    control,
+    setValue,
+    watch,
+    reset,
+    clearErrors,
+    formState: { errors },
+  } = useForm({
+    mode: "onBlur",
+    defaultValues: {
+      name: "",
+      lat: "",
+      lng: "",
+      frequency: "",
+    },
+  });
+
   const [position, setPosition] = useState([]);
   const [loading, setLoading] = useState(true);
   const [rotateIcon, setRotateIcon] = useState(false);
   const [points, setPoints] = useState([]);
+  const [addPointModal, setAddPointModal] = useState(false);
+  const [addPointLoading, setAddPointLoading] = useState(false);
   const [deleteModal, setDeleteModal] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [pointId, setPointId] = useState("");
@@ -56,15 +78,18 @@ export default function Map() {
     setDeleteLoading(false);
     setDeleteModal(false);
     setStatusLoading(false);
+    setAddPointModal(false);
+    setAddPointLoading(false);
 
     getData("/api/map", {})
       .then((res) => {
         setPoints(res.data);
-        setPosition([res.data[0].lat, res.data[0].lng]);
+        res.data.length > 0 && setPosition([res.data[0].lat, res.data[0].lng]);
         setLoading(false);
         setRotateIcon(false);
       })
       .catch((err) => {
+        console.log(err);
         setLoading(false);
       });
   };
@@ -73,25 +98,32 @@ export default function Map() {
     getAllPoints();
   }, []);
 
-  const renderCell = useCallback((point, columnKey, id) => {
+  const renderCell = (point, columnKey, id) => {
     const cellValue = point[columnKey];
 
     switch (columnKey) {
       case "id":
         return <span>{id}</span>;
-      case "x":
+      case "name":
         return (
           <div className="flex flex-col">
-            <p className="text-bold text-sm capitalize">{cellValue}</p>
+            <p className="text-bold text-sm capitalize text-gray-700">
+              {point.name}
+            </p>
+          </div>
+        );
+
+      case "lat":
+        return (
+          <div className="flex flex-col">
             <p className="text-bold text-sm capitalize text-gray-700">
               {point.lat}
             </p>
           </div>
         );
-      case "y":
+      case "lng":
         return (
           <div className="flex flex-col">
-            <p className="text-bold text-sm capitalize">{cellValue}</p>
             <p className="text-bold text-sm capitalize text-gray-700">
               {point.lng}
             </p>
@@ -100,8 +132,9 @@ export default function Map() {
       case "z":
         return (
           <div className="flex flex-col">
-            <p className="text-bold text-sm capitalize">{cellValue}</p>
-            <p className="text-bold text-sm capitalize text-gray-700">z</p>
+            <p className="text-bold text-sm capitalize text-gray-700">
+              {point.frequency}
+            </p>
           </div>
         );
 
@@ -122,7 +155,6 @@ export default function Map() {
       case "time":
         return (
           <div className="flex flex-col">
-            <p className="text-bold text-sm capitalize">{cellValue}</p>
             <p className="text-bold text-sm capitalize text-gray-700">
               {new Date(point.date).toLocaleString()}
             </p>
@@ -230,21 +262,33 @@ export default function Map() {
       default:
         return cellValue;
     }
-  }, []);
+  };
+
+  const addPointHandler = (data) => {
+    setAddPointLoading(true);
+
+    postData("/api/map", { ...data }).then((res) => {
+      // refresh point data table
+      getAllPoints();
+    });
+  };
 
   // delete single point
   const deletePointHandler = () => {
     setDeleteLoading(true);
 
     deleteData("/api/map", { id: pointId }).then((res) => {
+      // refresh point data table
       getAllPoints();
     });
   };
 
+  // change point status, show in map or not
   const changeStatusHandler = (id) => {
     setStatusLoading(true);
 
     postData("/api/map/change-status", { id }).then((res) => {
+      // refresh point data table
       getAllPoints();
     });
   };
@@ -254,8 +298,8 @@ export default function Map() {
       {/* add new point modal */}
       <Modal
         classNames={{ backdrop: "z-[999]", wrapper: "z-[9999]" }}
-        isOpen={isOpen}
-        onOpenChange={onOpenChange}
+        isOpen={addPointModal}
+        onClose={() => setAddPointModal(false)}
       >
         <ModalContent>
           {(onClose) => (
@@ -267,10 +311,12 @@ export default function Map() {
                 <div className="w-full flex flex-col gap-4">
                   <Input
                     isRequired
-                    label="Point name"
+                    label="Name"
                     labelPlacement="outside"
                     placeholder="Enter point name"
-                    // className="max-w-xs"
+                    isInvalid={errors.name ? true : false}
+                    errorMessage="name is required"
+                    {...register("name", { required: true })}
                   />
 
                   <Input
@@ -278,7 +324,9 @@ export default function Map() {
                     label="Lat"
                     labelPlacement="outside"
                     placeholder="Enter point lat"
-                    // className="max-w-xs"
+                    isInvalid={errors.lat ? true : false}
+                    errorMessage="lat is required"
+                    {...register("lat", { required: true })}
                   />
 
                   <Input
@@ -286,7 +334,9 @@ export default function Map() {
                     label="Lng"
                     labelPlacement="outside"
                     placeholder="Enter point lng"
-                    // className="max-w-xs"
+                    isInvalid={errors.lng ? true : false}
+                    errorMessage="lng is required"
+                    {...register("lng", { required: true })}
                   />
 
                   <Input
@@ -294,19 +344,26 @@ export default function Map() {
                     label="Frequency"
                     labelPlacement="outside"
                     placeholder="Enter point frequency"
-                    // className="max-w-xs"
+                    isInvalid={errors.frequency ? true : false}
+                    errorMessage="frequency is required"
+                    {...register("frequency", { required: true })}
                   />
                 </div>
               </ModalBody>
               <ModalFooter>
                 <div className="w-full flex justify-center gap-4">
-                  <Button color="danger" variant="light" onPress={onClose}>
+                  <Button
+                    color="danger"
+                    variant="light"
+                    onClick={() => setAddPointModal(false)}
+                  >
                     Close
                   </Button>
                   <Button
+                    isLoading={addPointLoading}
                     variant="shadow"
                     className="bg-green-600 text-white shadow-green-200"
-                    onPress={onClose}
+                    onClick={handleSubmit(addPointHandler)}
                   >
                     Add point
                   </Button>
@@ -381,7 +438,11 @@ export default function Map() {
             <Spinner label="please wait..." />
           </div>
         ) : (
-          <MapContainer center={[35.694523130867424,51.40922197948697]} zoom={13} scrollWheelZoom={false}>
+          <MapContainer
+            center={[35.694523130867424, 51.40922197948697]}
+            zoom={13}
+            scrollWheelZoom={false}
+          >
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -392,6 +453,7 @@ export default function Map() {
                 (point) =>
                   point.status === "active" && (
                     <Marker
+                      key={point._id}
                       icon={PointIcon}
                       position={[point.lat, point.lng]}
                     ></Marker>
@@ -404,7 +466,7 @@ export default function Map() {
       <div className="w-full flex flex-col mt-3 max-h-[40%]">
         <div className="w-full flex items-center gap-4 px-4">
           <Button
-            onPress={onOpen}
+            onPress={() => setAddPointModal(true)}
             className="bg-indigo-600 shadow-indigo-200 text-white"
             variant="shadow"
           >
@@ -413,8 +475,9 @@ export default function Map() {
 
           <button
             onClick={() => {
-              getAllPoints();
               setRotateIcon(true);
+
+              getAllPoints();
             }}
             className="bg-gray-100 active:scale-95 transition-all duration-300 w-10 h-10 rounded-xl shadow-lg flex justify-center items-center shadow-gray-200 text-gray-600"
           >
