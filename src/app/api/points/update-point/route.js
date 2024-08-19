@@ -8,8 +8,6 @@ export async function POST(req) {
     const body = await req.json();
     const { name, lat, lng, frequency, id } = body;
 
-    const point = await MapModel.findOne({ _id: id });
-
     await MapModel.findOneAndUpdate(
       { _id: id },
       {

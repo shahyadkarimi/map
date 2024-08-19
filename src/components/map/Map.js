@@ -580,6 +580,7 @@ export default function Map() {
       </div>
 
       <div className="w-full flex flex-col mt-3 max-h-[40%]">
+        {/* toolbar */}
         <div className="w-full flex items-center justify-between px-4">
           {/* add new point & refresh data */}
           <div className="w-full flex items-center gap-4">
