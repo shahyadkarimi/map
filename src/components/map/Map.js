@@ -322,6 +322,7 @@ export default function Map() {
         classNames={{ backdrop: "z-[999]", wrapper: "z-[9999]" }}
         isOpen={deleteModal}
         size="xs"
+        onClose={() => setDeleteModal(false)}
       >
         <ModalContent>
           {(onClose) => (
@@ -380,21 +381,22 @@ export default function Map() {
             <Spinner label="please wait..." />
           </div>
         ) : (
-          <MapContainer center={position} zoom={13} scrollWheelZoom={false}>
+          <MapContainer center={[35.694523130867424,51.40922197948697]} zoom={13} scrollWheelZoom={false}>
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
 
-            {points.map(
-              (point) =>
-                point.status === "active" && (
-                  <Marker
-                    icon={PointIcon}
-                    position={[point.lat, point.lng]}
-                  ></Marker>
-                )
-            )}
+            {points.length > 0 &&
+              points.map(
+                (point) =>
+                  point.status === "active" && (
+                    <Marker
+                      icon={PointIcon}
+                      position={[point.lat, point.lng]}
+                    ></Marker>
+                  )
+              )}
           </MapContainer>
         )}
       </div>
