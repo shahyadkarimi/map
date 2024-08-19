@@ -48,11 +48,15 @@ export default function Map() {
     setDeleteLoading(false);
     setDeleteModal(false);
 
-    getData("/api/map", {}).then((res) => {
-      setPoints(res.data);
-      setLoading(false);
-      setRotateIcon(false);
-    });
+    getData("/api/map", {})
+      .then((res) => {
+        setPoints(res.data);
+        setLoading(false);
+        setRotateIcon(false);
+      })
+      .catch((err) => {
+        setLoading(false);
+      });
   };
 
   useEffect(() => {

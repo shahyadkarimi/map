@@ -2,6 +2,7 @@ import axios from "axios";
 
 const servicesApi = axios.create({
   withCredentials: false,
+  baseURL: "http://localhost:3000",
   timeout: 60000,
   headers: {
     common: {
