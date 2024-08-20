@@ -140,34 +140,26 @@ export default function Map() {
       case "name":
         return (
           <div className="flex flex-col">
-            <p className="text-bold text-sm text-gray-700">
-              {point.name}
-            </p>
+            <p className="text-bold text-sm text-gray-700">{point.name}</p>
           </div>
         );
 
       case "lat":
         return (
           <div className="flex flex-col">
-            <p className="text-bold text-sm text-gray-700">
-              {point.lat}
-            </p>
+            <p className="text-bold text-sm text-gray-700">{point.lat}</p>
           </div>
         );
       case "lng":
         return (
           <div className="flex flex-col">
-            <p className="text-bold text-sm text-gray-700">
-              {point.lng}
-            </p>
+            <p className="text-bold text-sm text-gray-700">{point.lng}</p>
           </div>
         );
       case "z":
         return (
           <div className="flex flex-col">
-            <p className="text-bold text-sm text-gray-700">
-              {point.frequency}
-            </p>
+            <p className="text-bold text-sm text-gray-700">{point.frequency}</p>
           </div>
         );
 
@@ -608,8 +600,12 @@ export default function Map() {
           </div>
         ) : (
           <MapContainer
-            center={[settings.lat, settings.lng]}
-            zoom={settings.zoom}
+            center={
+              settings?.lat
+                ? [settings.lat, settings.lng]
+                : [35.695246913723636, 51.41011318883557]
+            }
+            zoom={settings?.zoom ? settings?.zoom : 13}
             scrollWheelZoom={true}
           >
             <TileLayer
