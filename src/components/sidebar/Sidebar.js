@@ -6,6 +6,8 @@ export default function Sidebar({
   showPointList,
   setShowPointList,
 }) {
+  const [openSidebar, setOpenSidebar] = useState(false);
+
   return (
     <div className="min-w-72 relative">
       <div className="min-w-72 fixed bottom-0 h-full flex flex-col gap-4 bg-indigo-100 p-5 pt-3">
