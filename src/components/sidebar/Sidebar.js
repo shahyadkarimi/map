@@ -9,31 +9,43 @@ export default function Sidebar({
   const [openSidebar, setOpenSidebar] = useState(false);
 
   return (
-    <div className="min-w-72 relative">
-      <div className="min-w-72 fixed bottom-0 h-full flex flex-col gap-4 bg-indigo-100 p-5 pt-3">
-        <div className="size-10 bg-indigo-200 rounded-xl -ml-2 flex justify-center items-center">
+    <div
+      className={`${
+        openSidebar ? "min-w-72" : "min-w-24"
+      } transition-all duration-300 relative`}
+    >
+      <div
+        className={`${
+          openSidebar ? "min-w-72" : "min-w-24"
+        } transition-all duration-300 fixed bottom-0 h-full flex flex-col gap-4 bg-indigo-100 p-5 pt-3`}
+      >
+        <button
+          onClick={() => setOpenSidebar(!openSidebar)}
+          className="size-14 bg-indigo-200 text-indigo-600 rounded-xl flex justify-center items-center"
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
             strokeWidth="1.5"
             stroke="currentColor"
-            className="size-6 text-indigo-600 "
+            className="size-6"
           >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
-              d="M6.75 15.75 3 12m0 0 3.75-3.75M3 12h18"
+              d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
             />
           </svg>
-        </div>
+        </button>
 
-        <div className="w-full h-40 flex items-center justify-center">
+        <div className="w-full h-auto my-10 flex items-center justify-center">
           <Image
             src="/assets/logo.png"
-            width={128}
-            height={160}
-            className=""
+            width={0}
+            height={0}
+            sizes="100vw"
+            className={`${openSidebar ? "w-28" :"w-14"} object-cover`}
             alt=""
             priority
           />
@@ -41,7 +53,9 @@ export default function Sidebar({
 
         <button
           onClick={() => setAddPointModal(true)}
-          className={`w-full h-14 bg-indigo-200 text-indigo-600 rounded-xl flex items-center gap-2 px-4 text-lg font-bold transition-all duration-300`}
+          className={`${
+            openSidebar ? "w-full" : "w-14"
+          } h-14 bg-indigo-200 overflow-hidden text-indigo-600 rounded-xl flex items-center gap-2 px-4 text-lg font-bold transition-all duration-300`}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -63,12 +77,14 @@ export default function Sidebar({
             />
           </svg>
 
-          <span>Add new point</span>
+          {openSidebar && <span>Add new point</span>}
         </button>
 
         <button
           onClick={() => setShowPointList(!showPointList)}
-          className={`w-full h-14 bg-indigo-200 text-indigo-600 rounded-xl flex items-center gap-2 px-4 text-lg font-bold transition-all duration-300`}
+          className={`${
+            openSidebar ? "w-full" : "w-14"
+          } h-14 bg-indigo-200 overflow-hidden text-indigo-600 rounded-xl flex items-center gap-2 px-4 text-lg font-bold transition-all duration-300`}
         >
           {showPointList ? (
             <svg
@@ -107,13 +123,17 @@ export default function Sidebar({
             </svg>
           )}
 
-          <span>
-            {showPointList ? "Hidden points list" : "Show points list"}
-          </span>
+          {openSidebar && (
+            <span>
+              {showPointList ? "Hidden points list" : "Show points list"}
+            </span>
+          )}
         </button>
 
         <button
-          className={`w-full h-14 bg-indigo-200 text-indigo-600 rounded-xl flex items-center gap-2 px-4 text-lg font-bold transition-all duration-300`}
+          className={`${
+            openSidebar ? "w-full" : "w-14"
+          } h-14 bg-indigo-200 overflow-hidden text-indigo-600 rounded-xl flex items-center gap-2 px-4 text-lg font-bold transition-all duration-300`}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -134,27 +154,8 @@ export default function Sidebar({
               d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
             />
           </svg>
-          <span>Settings</span>
+          {openSidebar && <span>Settings</span>}
         </button>
-
-        <div className="flex items-center gap-2 absolute bottom-5 text-red-600 left-5">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth="1.5"
-            stroke="currentColor"
-            className="size-5 mb-1"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15m-3 0-3-3m0 0 3-3m-3 3H15"
-            />
-          </svg>
-
-          <span>Logout</span>
-        </div>
       </div>
     </div>
   );
