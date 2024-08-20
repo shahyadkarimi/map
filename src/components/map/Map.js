@@ -43,7 +43,12 @@ const statusColorMap = {
   disable: "danger",
 };
 
-export default function Map() {
+export default function Map({
+  addPointModal,
+  setAddPointModal,
+  showPointList,
+  setShowPointList,
+}) {
   const {
     register,
     handleSubmit,
@@ -67,7 +72,6 @@ export default function Map() {
   const [loading, setLoading] = useState(true);
   const [rotateIcon, setRotateIcon] = useState(false);
   const [points, setPoints] = useState([]);
-  const [addPointModal, setAddPointModal] = useState(false);
   const [addPointLoading, setAddPointLoading] = useState(false);
   const [deleteModal, setDeleteModal] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -79,6 +83,7 @@ export default function Map() {
   const [settingsModal, setSettingsModal] = useState(false);
   const [settingsLoading, setSettingsLoading] = useState(true);
   const [settingsUpdateLoading, setSettingsUpdateLoading] = useState(false);
+  const [pointLabel, setPointLabel] = useState({});
 
   // get all points
   const getSettings = () => {
@@ -222,6 +227,7 @@ export default function Map() {
     postData("/api/points", { ...data }).then((res) => {
       // refresh point data table
       getAllPoints();
+      reset({ name: "", lat: "", lng: "", frequency: "" });
     });
   };
 
@@ -593,7 +599,7 @@ export default function Map() {
       </Modal>
 
       {/* map & markers */}
-      <div className="w-full relative h-[60%]">
+      <div className={`w-full relative h-full`}>
         {loading || settingsLoading ? (
           <div className="flex justify-center items-center bg-gray-50 w-full h-full">
             <Spinner label="please wait..." />
@@ -621,6 +627,15 @@ export default function Map() {
                       key={point._id}
                       icon={PointIcon}
                       position={[point.lat, point.lng]}
+                      eventHandlers={{
+                        mouseover: (e) => {
+                          setPointLabel(point);
+                        },
+
+                        mouseout: (e) => {
+                          setPointLabel({});
+                        },
+                      }}
                     >
                       <Popup>
                         <div className="w-full flex flex-col gap-1">
@@ -628,6 +643,7 @@ export default function Map() {
                           <span>lat: {point.lat}</span>
                           <span>lng: {point.lng}</span>
                           <span>frequency: {point.frequency}</span>
+                          <span>status: {point.status}</span>
 
                           <div className="w-full flex items-center justify-center mt-2 gap-3">
                             <button
@@ -646,6 +662,26 @@ export default function Map() {
                             >
                               <DeleteIcon />
                             </button>
+
+                            <button
+                              onClick={() => changeStatusHandler(point._id)}
+                              className="text-lg text-warning cursor-pointer active:opacity-50"
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke-width="1.5"
+                                stroke="currentColor"
+                                class="size-5"
+                              >
+                                <path
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88"
+                                />
+                              </svg>
+                            </button>
                           </div>
                         </div>
                       </Popup>
@@ -654,46 +690,24 @@ export default function Map() {
               )}
           </MapContainer>
         )}
+
+        {pointLabel?.lat && (
+          <div
+            className={`transition-all duration-300 flex flex-col gap-1 text-xs absolute bg-white p-2 rounded-lg right-4 bottom-4 z-[999]`}
+          >
+            <span>lat: {pointLabel?.lat}</span>
+            <span>lng: {pointLabel?.lng}</span>
+          </div>
+        )}
       </div>
 
-      <div className="w-full flex flex-col mt-3 max-h-[40%]">
+      <div
+        className={`w-full flex flex-col mt-3 ${
+          showPointList ? "h-[40%]" : "h-0 overflow-hidden"
+        } transition-all duration-300`}
+      >
         {/* toolbar */}
-        <div className="w-full flex items-center justify-between px-4">
-          {/* add new point & refresh data */}
-          <div className="w-full flex items-center gap-4">
-            <Button
-              onPress={() => setAddPointModal(true)}
-              className="bg-indigo-600 shadow-indigo-200 text-white"
-              variant="shadow"
-            >
-              + New Point
-            </Button>
-
-            <button
-              onClick={() => {
-                setRotateIcon(true);
-
-                getAllPoints();
-              }}
-              className="bg-gray-100 active:scale-95 transition-all duration-300 w-10 h-10 rounded-xl shadow-lg flex justify-center items-center shadow-gray-200 text-gray-600"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth="1.5"
-                stroke="currentColor"
-                className={`size-5 ${rotateIcon && "spinner-anim"}`}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"
-                />
-              </svg>
-            </button>
-          </div>
-
+        <div className="w-full flex items-center gap-4 px-4">
           {/* settings */}
           <button
             onClick={openSettingsModal}
@@ -722,6 +736,31 @@ export default function Map() {
                 />
               </svg>
             )}
+          </button>
+
+          {/* refresh data */}
+          <button
+            onClick={() => {
+              setRotateIcon(true);
+
+              getAllPoints();
+            }}
+            className="bg-gray-100 active:scale-95 transition-all duration-300 w-10 h-10 rounded-xl shadow-lg flex justify-center items-center shadow-gray-200 text-gray-600"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth="1.5"
+              stroke="currentColor"
+              className={`size-5 ${rotateIcon && "spinner-anim"}`}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"
+              />
+            </svg>
           </button>
         </div>
 

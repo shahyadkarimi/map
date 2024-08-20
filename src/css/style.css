@@ -17,3 +17,7 @@
 .spinner-anim {
   animation: spinner 1s infinite;
 }
+
+.leaflet-right {
+  display: none;
+}
