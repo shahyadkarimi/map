@@ -1,6 +1,11 @@
-"use client"
-import Map from "@/components/map/Map";
-import Sidebar from "@/components/sidebar/Sidebar";
+"use client";
+import dynamic from "next/dynamic";
+const Map = dynamic(() => import("@/components/map/Map"), {
+  ssr: false,
+});
+const Sidebar = dynamic(() => import("@/components/sidebar/Sidebar"), {
+  ssr: false,
+});
 
 export default function Home() {
   return (
