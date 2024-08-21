@@ -1,6 +1,8 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useCallback, useEffect, useState } from "react";
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
+import L from "leaflet";
+import "leaflet.offline";
 import "leaflet/dist/leaflet.css";
 import {
   Table,
@@ -84,6 +86,10 @@ export default function Map({
   const [settingsLoading, setSettingsLoading] = useState(true);
   const [settingsUpdateLoading, setSettingsUpdateLoading] = useState(false);
   const [pointLabel, setPointLabel] = useState({});
+  const [once, setOnce] = useState(true);
+  const [map, setMap] = useState();
+  const [progress, setProgress] = useState(0);
+  const [total, setTotal] = useState(0);
 
   // get all points
   const getSettings = () => {
@@ -128,12 +134,94 @@ export default function Map({
   };
 
   useEffect(() => {
-    // get all points
-    getAllPoints();
+    if (once) {
+      setOnce(false);
+      // get all points
+      getAllPoints();
 
-    // get settings data
-    getSettings();
-  }, []);
+      // get settings data
+      getSettings();
+    }
+
+    if (map) {
+      const tileLayerOffline = L.tileLayer.offline(
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        {
+          attribution:
+            '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
+          subdomains: "abc",
+          minZoom: 11,
+          maxZoom: 16,
+        }
+      );
+
+      tileLayerOffline.addTo(map);
+
+      const controlSaveTiles = L.control.savetiles(tileLayerOffline, {
+        zoomlevels: [11, 12, 13, 14, 15, 16], // optional zoomlevels to save, default current zoomlevel
+        confirm(layer, succescallback) {
+          // eslint-disable-next-line no-alert
+          if (
+            window.confirm(
+              `Are you shure you want download ${layer._tilesforSave.length} tiles ?`
+            )
+          ) {
+            succescallback();
+          }
+        },
+        confirmRemoval(layer, successCallback) {
+          // eslint-disable-next-line no-alert
+          if (window.confirm("Are you shure you want remove all the tiles?")) {
+            successCallback();
+          }
+        },
+        saveText: `<div class="w-full h-full flex justify-center items-center">
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+            class="size-5"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"
+            />
+          </svg>
+        </div>`,
+        rmText: `<div class="w-full h-full flex justify-center items-center">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="size-5"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
+              />
+            </svg>
+          </div>`,
+      });
+
+      controlSaveTiles.addTo(map);
+
+      let progress;
+      tileLayerOffline.on("savestart", (e) => {
+        progress = 0;
+        setTotal(e._tilesforSave.length);
+      });
+      tileLayerOffline.on("savetileend", () => {
+        progress += 1;
+        setProgress(progress);
+      });
+    }
+  }, [map]);
 
   // data table custom cell
   const renderCell = (point, columnKey, id) => {
@@ -598,6 +686,43 @@ export default function Map({
         </ModalContent>
       </Modal>
 
+      {/* download tiles modal */}
+      <Modal
+        classNames={{ backdrop: "z-[999]", wrapper: "z-[9999]" }}
+        isOpen={progress > 0 && total > 0}
+        onClose={progress === total}
+      >
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col gap-1">
+                Tiles Downloading
+              </ModalHeader>
+              <ModalBody>
+                <div className="w-full text-sm flex justify-between items-center gap-2">
+                  <span>Total Tiles : {total}</span>
+                  <span>Downloaded Tiles : {progress}</span>
+
+                  {/* <div className="w-full h-5 rounded-full bg-gray-200">
+                    <div
+                      style={{ width: `${total / progress}%` }}
+                      className="text-xs text-white h-full bg-indigo-600 rounded-full flex justify-center items-center"
+                    >
+                      {progress}%
+                    </div>
+                  </div> */}
+                </div>
+              </ModalBody>
+              <ModalFooter>
+                <div className="w-full flex justify-center gap-4">
+                  <Spinner size="" label="Please wait..." />
+                </div>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+
       {/* map & markers */}
       <div className={`w-full relative h-full`}>
         {loading || settingsLoading ? (
@@ -613,6 +738,7 @@ export default function Map({
             }
             zoom={settings?.zoom ? settings?.zoom : 13}
             scrollWheelZoom={true}
+            ref={setMap}
           >
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
