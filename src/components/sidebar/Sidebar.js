@@ -11,17 +11,17 @@ export default function Sidebar({
   return (
     <div
       className={`${
-        openSidebar ? "min-w-72" : "min-w-24"
+        openSidebar ? "min-w-60" : "min-w-16"
       } transition-all duration-300 relative`}
     >
       <div
         className={`${
-          openSidebar ? "min-w-72" : "min-w-24"
-        } transition-all duration-300 fixed bottom-0 h-full flex flex-col gap-4 bg-indigo-100 p-5 pt-3`}
+          openSidebar ? "min-w-60 p-5" : "min-w-16 p-2"
+        } transition-all duration-300 fixed bottom-0 h-full flex flex-col items-center gap-4 bg-indigo-100  pt-3`}
       >
         <button
           onClick={() => setOpenSidebar(!openSidebar)}
-          className="size-14 bg-indigo-200 text-indigo-600 rounded-xl flex justify-center items-center"
+          className="size-10 bg-indigo-200 text-indigo-600 rounded-xl flex justify-center items-center"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -45,7 +45,7 @@ export default function Sidebar({
             width={0}
             height={0}
             sizes="100vw"
-            className={`${openSidebar ? "w-28" :"w-14"} object-cover`}
+            className={`${openSidebar ? "w-20" : "w-10"} object-cover`}
             alt=""
             priority
           />
@@ -54,8 +54,8 @@ export default function Sidebar({
         <button
           onClick={() => setAddPointModal(true)}
           className={`${
-            openSidebar ? "w-full" : "w-14"
-          } h-14 bg-indigo-200 overflow-hidden text-indigo-600 rounded-xl flex items-center gap-2 px-4 text-lg font-bold transition-all duration-300`}
+            openSidebar ? "w-full h-14 px-4" : "w-10  h-10 justify-center"
+          } bg-indigo-200 overflow-hidden text-indigo-600 rounded-xl flex items-center gap-2 font-bold transition-all duration-300`}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -63,7 +63,7 @@ export default function Sidebar({
             viewBox="0 0 24 24"
             strokeWidth="1.5"
             stroke="currentColor"
-            className="size-6"
+            className={`${openSidebar ? "size-6" : "size-5"}`}
           >
             <path
               strokeLinecap="round"
@@ -83,8 +83,8 @@ export default function Sidebar({
         <button
           onClick={() => setShowPointList(!showPointList)}
           className={`${
-            openSidebar ? "w-full" : "w-14"
-          } h-14 bg-indigo-200 overflow-hidden text-indigo-600 rounded-xl flex items-center gap-2 px-4 text-lg font-bold transition-all duration-300`}
+            openSidebar ? "w-full h-14 px-4" : "w-10  h-10 justify-center"
+          } bg-indigo-200 overflow-hidden text-indigo-600 rounded-xl flex items-center gap-2 font-bold transition-all duration-300`}
         >
           {showPointList ? (
             <svg
@@ -93,7 +93,7 @@ export default function Sidebar({
               viewBox="0 0 24 24"
               strokeWidth="1.5"
               stroke="currentColor"
-              className="size-6"
+              className={`${openSidebar ? "size-6" : "size-5"}`}
             >
               <path
                 strokeLinecap="round"
@@ -108,7 +108,7 @@ export default function Sidebar({
               viewBox="0 0 24 24"
               strokeWidth="1.5"
               stroke="currentColor"
-              className="size-6"
+              className={`${openSidebar ? "size-6" : "size-5"}`}
             >
               <path
                 strokeLinecap="round"
@@ -130,10 +130,10 @@ export default function Sidebar({
           )}
         </button>
 
-        <button
+        {/* <button
           className={`${
-            openSidebar ? "w-full" : "w-14"
-          } h-14 bg-indigo-200 overflow-hidden text-indigo-600 rounded-xl flex items-center gap-2 px-4 text-lg font-bold transition-all duration-300`}
+            openSidebar ? "w-full h-14 px-4" : "w-10  h-10 justify-center"
+          } bg-indigo-200 overflow-hidden text-indigo-600 rounded-xl flex items-center gap-2 font-bold transition-all duration-300`}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -141,7 +141,7 @@ export default function Sidebar({
             viewBox="0 0 24 24"
             strokeWidth="1.5"
             stroke="currentColor"
-            className="size-6"
+            className={`${openSidebar ? "size-6" : "size-5"}`}
           >
             <path
               strokeLinecap="round"
@@ -155,7 +155,7 @@ export default function Sidebar({
             />
           </svg>
           {openSidebar && <span>Settings</span>}
-        </button>
+        </button> */}
       </div>
     </div>
   );

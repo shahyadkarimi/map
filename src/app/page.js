@@ -10,7 +10,7 @@ const Sidebar = dynamic(() => import("@/components/sidebar/Sidebar"), {
 
 export default function Home() {
   const [addPointModal, setAddPointModal] = useState(false);
-  const [showPointList, setShowPointList] = useState(false);
+  const [showPointList, setShowPointList] = useState(true);
 
   return (
     <div className="w-full h-screen flex items-center">
