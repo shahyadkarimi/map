@@ -21,12 +21,14 @@ import {
   Input,
   Spinner,
   Chip,
+  DateRangePicker,
 } from "@nextui-org/react";
 import { deleteData, getData, postData } from "@/services/API";
 import { PointIcon } from "./PointIcon";
 import { useForm } from "react-hook-form";
 import { EditIcon } from "./EditIcon";
 import { DeleteIcon } from "./DeleteIcon";
+import { dateFormatter } from "@/helper/helper";
 
 // table columns
 const columns = [
@@ -94,7 +96,7 @@ export default function Map({
   const [map, setMap] = useState();
   const [progress, setProgress] = useState(0);
   const [total, setTotal] = useState(0);
-  const [searchLoading, setSearchLoading] = useState(false);
+  const [date, setDate] = useState({});
   const searchVal = watch("search");
 
   // get all points
@@ -215,6 +217,8 @@ export default function Map({
             </svg>
           </div>`,
       });
+
+      controlSaveTiles.addTo(map);
 
       let progress;
       tileLayerOffline.on("savestart", (e) => {
@@ -411,6 +415,18 @@ export default function Map({
     );
 
     setPointsList(filteredPoints);
+  };
+
+  const sortByDateHandler = () => {
+    const startDate = new Date(dateFormatter(date).start);
+    const endDate = new Date(dateFormatter(date).end);
+
+    const result = points.filter((point) => {
+      const date = new Date(point.date);
+      return date >= startDate && date <= endDate;
+    });
+
+    setPointsList(result);
   };
 
   return (
@@ -848,9 +864,10 @@ export default function Map({
       >
         {/* toolbar */}
         <div className="w-full flex justify-between items-center px-4">
-          <div className="w-80">
+          <div className="flex justify-center gap-16">
             <Input
               isRequired
+              className="w-80"
               labelPlacement="outside"
               placeholder="search point..."
               value={searchVal}
@@ -900,6 +917,46 @@ export default function Map({
               }
               size="md"
             />
+          </div>
+
+          <div className="flex flex-row-reverse gap-4">
+            <DateRangePicker
+              aria-label="filter by date"
+              value={date}
+              onChange={setDate}
+            />
+
+            <Button
+              onClick={sortByDateHandler}
+              variant="shadow"
+              className="bg-indigo-600 shadow-indigo-200 text-white"
+            >
+              Filter
+            </Button>
+
+            {date.start && (
+              <button
+                onClick={() => {
+                  setPointsList(points);
+                  setDate({});
+                }}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth="1.5"
+                  stroke="currentColor"
+                  className="size-5 text-red-600"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18 18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            )}
           </div>
 
           <div className="flex items-center flex-row-reverse gap-4">
