@@ -42,36 +42,6 @@ const getData = async (param, data, withToken = false) => {
   return res;
 };
 
-// patch method
-const patchData = async (param, data, withToken = false) => {
-  if (withToken) {
-    let token = localStorage.getItem("token");
-    const res = await servicesApi.patch(param, data, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    return res;
-  }
-
-  const res = await servicesApi.patch(param, data);
-  return res;
-};
-
-// patch method
-const putData = async (param, data, withToken = false) => {
-  if (withToken) {
-    let token = localStorage.getItem("token");
-    const res = await servicesApi.put(param, data, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    return res;
-  }
-
-  const res = await servicesApi.put(param, data);
-  return res;
-};
-
 // delete method
 const deleteData = async (param, data, withToken = false) => {
   if (withToken) {
@@ -88,4 +58,4 @@ const deleteData = async (param, data, withToken = false) => {
   return res;
 };
 
-export { postData, getData, patchData, deleteData, putData };
+export { postData, getData, deleteData};
