@@ -22,6 +22,7 @@ import {
   Spinner,
   Chip,
   DateRangePicker,
+  TimeInput,
 } from "@nextui-org/react";
 import { deleteData, getData, postData } from "@/services/API";
 import { PointIcon } from "./PointIcon";
@@ -98,6 +99,8 @@ export default function Map({
   const [total, setTotal] = useState(0);
   const [date, setDate] = useState({});
   const searchVal = watch("search");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
 
   // get all points
   const getSettings = () => {
@@ -418,8 +421,8 @@ export default function Map({
   };
 
   const sortByDateHandler = () => {
-    const startDate = new Date(dateFormatter(date).start);
-    const endDate = new Date(dateFormatter(date).end);
+    const startDate = new Date(dateFormatter(date, from).start);
+    const endDate = new Date(dateFormatter(date, to).end);
 
     const result = points.filter((point) => {
       const date = new Date(point.date);
@@ -924,6 +927,27 @@ export default function Map({
               aria-label="filter by date"
               value={date}
               onChange={setDate}
+              hideTimeZone
+              defaultValue={
+                {
+                  // start: parseAbsoluteToLocal("2024-04-01T07:45:00Z"),
+                  // end: parseAbsoluteToLocal("2024-04-14T19:15:00Z"),
+                }
+              }
+            />
+
+            <TimeInput
+              label="to"
+              value={to}
+              onChange={setTo}
+              labelPlacement="outside-left"
+            />
+
+            <TimeInput
+              label="from"
+              value={from}
+              onChange={setFrom}
+              labelPlacement="outside-left"
             />
 
             <Button
@@ -939,6 +963,8 @@ export default function Map({
                 onClick={() => {
                   setPointsList(points);
                   setDate({});
+                  setFrom("");
+                  setTo("");
                 }}
               >
                 <svg
